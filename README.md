@@ -1,38 +1,15 @@
 ![Arch Linux](https://archlinux.org/static/logos/archlinux-logo-dark-90dpi.ebdee92a15b3.png)
-## Arch Linux Installation Guide - Updated for [Arch 2024.12.01](https://archlinux.org/releng/releases/2024.12.01/)
-#### The goal of this Arch Linux installation guide is to provide an easier to interpret, while still comprehensive how-to for installing Arch Linux on x86_64 architecture devices. This guide assumes you are technically inclined and have a basic understanding of Linux. This installation guide was made with intentions of sticking to systemd (systemd-boot, systemd-networkd). Due to the vast amount of options/preferences for networking tools & boot loaders, instructions for NetworkManager & GRUB were included to their respective sections
-###### This guide is a mix of knowledge and information from the [ArchWiki](https://wiki.archlinux.org/title/Installation_guide)
-To look for new releases, navigate to the [Arch Releases](https://archlinux.org/releng/releases/) page
----
+# Arch Linux Installation Guide  
+Updated for [Arch 2024.12.01](https://archlinux.org/releng/releases/2024.12.01/)  
 
-### Contents
-1. [Verify Boot Mode](#1-verify-boot-mode)  
-2. [Inital Network Setup](#2-initial-network-setup)  
-    2.1. [Ethernet](#21-ethernet)  
-    2.1. [WiFi](#21-wifi)  
-3. [System Clock](#3-system-clock)  
-4. [Disk Partitioning](#4-disk-partitioning)  
-5. [Swap Space (Optional)](#5-swap-space-optional)  
-    5.1. [Swap Partition](#51-swap-partition)  
-    5.1. [Swapfile](#51-swapfile)  
-6. [Format Partitions](#6-format-partitions)  
-7. [Mount Partitions](#7-mount-partitions)  
-8. [Install Essential Packages](#8-install-essential-packages)  
-9. [Fstab](#9-fstab)  
-10. [Change Root](#10-change-root)  
-11. [Time Zone](#11-time-zone)  
-12. [Localization](#12-localization)  
-13. [Network Configuration](#13-network-configuration)  
-    13.1. [Systemd-networkd](#131-systemd-networkd)  
-    13.1. [NetworkManager](#131-networkmanager)  
-14. [Initramfs](#14-initramfs)  
-15. [Users & Passwords](#15-users-and-passwords)  
-16. [Boot Loader](#16-boot-loader)  
-    16.1. [Systemd-boot](#161-systemd-boot)  
-    16.1. [GRUB](#161-grub)  
-17. [Customization](#17-customization)  
+## Introduction
+The goal of this Arch Linux installation guide is to provide an easier to interpret, while still comprehensive how-to for installing Arch Linux on x86_64 architecture devices. This guide assumes you are technically inclined and have a basic understanding of Linux. This installation guide was made with intentions of sticking to systemd (systemd-boot, systemd-networkd). Due to the vast amount of options/preferences for networking tools & boot loaders, instructions for NetworkManager & GRUB were included to their respective sections.  
 
-## 1. Verify Boot Mode
+This guide is a mix of knowledge and information as listed in the [Appendix A - Resources](#appendix-a---resources) section.  
+
+**What won't be covered is some basics, like how to get the image and write it to USB, or PXE boot, or however you want to get the target system booted to the Arch install ISO.**  Look in the [Appendix B - Downloads](#appendix-b---downloads)
+
+## Verify Boot Mode
 Verify the boot mode and UEFI bitness (if booted in UEFI mode):
 ```shell
 ls /sys/firmware/efi/efivars
@@ -45,19 +22,19 @@ To see/verify the bitness of UEFI that you are booted into:
 cat /sys/firmware/efi/fw_platform_size
 ```
 
-## 2. Initial Network Setup
+## Initial Network Setup
 check if the [network interface](https://wiki.archlinux.org/title/Network_interface#Network_interfaces) is enabled with [iplink](https://man.archlinux.org/man/ip-link.8)
 ```shell
 ip link
 ```
 
 if disabled, check the device driver -- see [ethernet#device-driver](https://wiki.archlinux.org/title/Network_configuration/Ethernet#Device_driver) or [wireless#device-driver](https://wiki.archlinux.org/title/Network_configuration/Wireless#Device_driver)
-### 2.1. _Ethernet_
+### _Ethernet_
 plug in an ethernet cable
 
 ---
 
-### 2.1. _WiFi_
+### _WiFi_
 make sure the card isn't blocked with [rfkill](https://wiki.archlinux.org/title/Network_configuration/Wireless#Rfkill_caveat)
 ```shell
 rfkill list
@@ -105,7 +82,7 @@ exit
 
 _* for wwan (mobile broadband) -- see [nmcli](https://wiki.archlinux.org/title/Mobile_broadband_modem#ModemManager)_
 
-## 3. System Clock
+## System Clock
 set system clock [timedatectl](https://man.archlinux.org/man/timedatectl.1)
 ```shell
 timedatectl set-ntp true
@@ -116,7 +93,7 @@ check status
 timedatectl status
 ```
 
-## 4. Disk Partitioning
+## Disk Partitioning
 list disk and block devices
 ```shell
 lsblk
@@ -134,36 +111,36 @@ to create any stacked block devices for [lvm](https://wiki.archlinux.org/title/L
 
 <h3 style="color:aquamarine;">gdisk /dev/sdX</h3>
 
-#### new gpt partition table (erases any existing partitions)
+**new gpt partition table (erases any existing partitions)**
 <p style="color:aquamarine;">o</p>
 
-#### efi system partition
+**efi system partition**
 <p style="color:aquamarine;">n</p>
 <p style="color:aquamarine;">+512M</p>
 <p style="color:aquamarine;">ef00</p>
 
 
-#### (swap partition)
+**(swap partition)**
 <p style="color:aquamarine;">n</p>
 <p style="color:aquamarine;">+4G</p>
 <p style="color:aquamarine;">8200</p>
 
-#### root partition
+**root partition**
 <p style="color:aquamarine;">n</p>
 <p style="color:aquamarine;">+10G</p>
 <p style="color:aquamarine;">8300</p>
 
-#### write changes
+**write changes**
 <p style="color:aquamarine;">w</p>
 </details>
 
 
-## 5. _Swap Space (Optional)_
+## _Swap Space (Optional)_
 in order to create a [swap](https://wiki.archlinux.org/title/Partitioning_tools#Swap) consider creating either a [swap partition](https://wiki.archlinux.org/title/Swap#Swap_partition) or a [swapfile](https://wiki.archlinux.org/title/Swap#Swap_file) now. to share the [swap space](https://wiki.archlinux.org/title/Swap_file#Swap_space) system-wide with other operating systems or enable hibernation; create a linux swap partition. in comparison, a swapfile can change size on-the-fly and is more easily removed, which may be more desirable for a modestly-sized ssd
 
 ----
 
-### 5.1. _Swap Partition_
+### _Swap Partition_
 if a swap partition was made, format it by replacing 'swap_partition' with it's  assigned block device path, e.g. sda2
 ```shell
 mkswap /dev/<swap_partition>
@@ -176,7 +153,7 @@ swapon /dev/<swap_partition>
 
 ----
 
-### 5.1. _Swapfile_
+### _Swapfile_
 to create a swapfile instead, use dd. the following command will create a 4gb swapfile
 ```shell
 dd if=/dev/zero of=/swapfile bs=1M count=<4096> status=progress
@@ -197,7 +174,7 @@ a swapfile without the correct permissions is a big security risk. set the file 
 chmod 600 /swapfile
 ```
 
-## 6. Format Partitions
+## Format Partitions
 format the root partition just created with preferred [filesystem](https://wiki.archlinux.org/title/File_systems) and replace 'root_partition' with it's assigned [block device](https://en.m.wikipedia.org/wiki/Device_file#Block_devices) path, e.g. sda3
 ```shell
 mkfs.<ext4> /dev/<root_partition>
@@ -210,7 +187,7 @@ _*if an efi partition already exist, skip formatting_
 mkfs.vfat -F32 /dev/<efi_partition>
 ```
 
-## 7. Mount Partitions
+## Mount Partitions
 [mount](https://wiki.archlinux.org/title/Mount) root partition to /mnt
 ```shell
 mount /dev/<root_partition> /mnt
@@ -224,13 +201,13 @@ mkdir /mnt/boot
 mount /dev/<efi_partition> /mnt/boot
 ```
 
-## 8. Install Essential Packages
+## Install Essential Packages
 [pacstrap](https://man.archlinux.org/man/pacstrap.8) base, [kernel](https://wiki.archlinux.org/title/Kernel) choice and if the system has an amd or intel cpu, install the coinciding [microcode](https://wiki.archlinux.org/title/Microcode) updates
 ```shell
 pacstrap /mnt base linux linux-firmware nano sudo <cpu_manufacturer>-ucode
 ```
 
-## 9. Fstab
+## Fstab
 generate an [fstab](https://wiki.archlinux.org/title/Fstab) file from detected mounted block devices, defined by uuid's
 ```shell
 genfstab -U /mnt > /mnt/etc/fstab
@@ -241,13 +218,13 @@ check generated fstab
 cat /mnt/etc/fstab
 ```
 
-## 10. Change Root
+## Change Root
 [chroot](https://wiki.archlinux.org/title/Change_root) into freshly installed system
 ```shell
 arch-chroot /mnt
 ```
 
-## 11. Time Zone
+## Time Zone
 set [time zone](https://wiki.archlinux.org/title/Time_zone)
 ```shell
 ln -sf /usr/share/zoneinfo/<region>/<city> /etc/localtime
@@ -260,7 +237,7 @@ hwclock --systohc
 
 _* this assumes the hardware clock is set to [utc](https://en.m.wikipedia.org/wiki/UTC). for more, see [system time#time standard](https://wiki.archlinux.org/title/System_time#Time_standard)_
 
-## 12. Localization
+## Localization
 [edit](https://wiki.archlinux.org/title/Textedit) /etc/locale.gen and un-[comment](https://linuxhint.com/bash_comments/) 'en_US.UTF-8 UTF-8' or any other necessary [locales](https://wiki.archlinux.org/title/Locale) by removing the '#'
 ```shell
 nano /etc/locale.gen
@@ -280,7 +257,7 @@ locale-gen
 echo LANG=en_US.UTF-8 > /etc/locale.conf
 ```
 
-## 13. Network Configuration
+## Network Configuration
 create [hostname](https://wiki.archlinux.org/title/Hostname) file
 ```shell
 echo <hostname> > /etc/hostname
@@ -300,7 +277,7 @@ _* if the system has a permanently assigned ip address, use it instead of '127.0
 
 install any desired [network managment](https://wiki.archlinux.org/title/Network_configuration) software. for this guide [systemd-networkd](https://wiki.archlinux.org/title/Systemd-networkd) is used. if you prefer a gui and configureless setup -- check out networkmanager below
 
-### 13.1. _Systemd-networkd_
+### _Systemd-networkd_
 install wpa_supplicant
 ```shell
 pacman -S wpa_supplicant
@@ -336,7 +313,7 @@ _* for a static connection -- see [#static](https://wiki.archlinux.org/title/Sys
 
 ----
 
-### 13.1. _NetworkManager_
+### _NetworkManager_
 install [networkmanager](https://wiki.archlinux.org/title/NetworkManager)
 ```shell
 pacman -S networkmanager
@@ -347,7 +324,7 @@ enable and start networkmanager service daemon
 systemctl enable NetworkManager
 ```
 
-## 14. _Initramfs_
+## _Initramfs_
 _* creating an initramfs image isn't necessary since [mkinitcpio](https://wiki.archlinux.org/title/Mkinitcpio) was ran when pacstrap installed the kernel_
 
 for [lvm](https://wiki.archlinux.org/title/Install_Arch_Linux_on_LVM#Adding_mkinitcpio_hooks), [system encryption](https://wiki.archlinux.org/title/Dm-crypt) or [raid](https://wiki.archlinux.org/title/RAID#Configure_mkinitcpio) modify [mkinitcpio.conf](https://man.archlinux.org/man/mkinitcpio.conf.5) then recreate the initramfs image with:
@@ -355,7 +332,7 @@ for [lvm](https://wiki.archlinux.org/title/Install_Arch_Linux_on_LVM#Adding_mkin
 mkinitcpio -P
 ```
 
-## 15. Users and Passwords
+## Users and Passwords
 create a new user
 ```shell
 useradd -m <username>
@@ -386,10 +363,10 @@ disable login to [superuser/root](https://en.m.wikipedia.org/wiki/Root_user), lo
 passwd -l root
 ```
 
-## 16. Boot Loader
+## Boot Loader
 install a linux-capable [boot loader](https://wiki.archlinux.org/title/Boot_loader). for simplicity and ease-of-use I recommend systemd-boot, not grub for uefi. systemd-boot will boot any configured efi image including windows operating systems. systemd-boot is not compatible with systems booted in legacy bios mode
 
-### 16.1. _Systemd-boot_
+### _Systemd-boot_
 install [systemd-boot](https://wiki.archlinux.org/title/Systemd-boot) in the efi system partition
 ```shell
 bootctl --path=/boot install
@@ -427,12 +404,12 @@ bootctl list
 
 ----
 
-### 16.1 _GRUB_
+### _GRUB_
 install [grub](https://wiki.archlinux.org/title/GRUB). also, install  [os-prober](https://archlinux.org/packages/?name=os-prober) to automatically add boot entries for other operating systems
 ```shell
 pacman -S grub os-prober
 ```
-#### 16.2. _UEFI_
+#### _UEFI_
 for systems booted in uefi mode,
 install [efibootmgr](https://wiki.archlinux.org/title/EFISTUB#efibootmgr)
 ```shell
@@ -446,7 +423,7 @@ grub-install --target=x86_64-efi --efi-directory=/boot/grub --bootloader-id=GRUB
 
 ----
 
-#### 16.2. _BIOS_
+#### _BIOS_
 othwerwise, if booted in bios mode; where path is the entire disk, not just a partition or path to a directory
 install grub to the disk
 ```shell
@@ -464,10 +441,10 @@ _* if a warning that os-prober will not be executed appears then, un-comment 'GR
 ```shell
 nano /etc/default/grub
 ```
-## 17. Customization
+## Customization
 This is a good time to do any other customizations such as installing other software or performing any configuration prior to the initial boot.
 
-## 18. Arch Linux Installation Complete :partying_face:
+## Arch Linux Installation Complete :partying_face:
 exit (ctrl+d) chroot
 ```shell
 exit
@@ -482,3 +459,9 @@ reboot the system
 ```shell
 reboot
 ```
+
+## Appendix A - Resources  
+[ArchWiki](https://wiki.archlinux.org/title/Installation_guide)  
+
+## Appendix B - Downloads  
+[Arch Releases](https://archlinux.org/releng/releases/)
