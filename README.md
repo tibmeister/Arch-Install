@@ -388,7 +388,7 @@ _*if a different kernel was installed such as linux-zen, you would add '-zen' ab
 
 Edit [loader config](https://man.archlinux.org/man/loader.conf.5)
 ```shell
-vim /boot/loader/loader.conf`
+vim /boot/loader/loader.conf
 ```
 Add the following lines
 ```
@@ -453,7 +453,7 @@ exit
 
 unmount all partitions; check if busy
 ```shell
-unmount -R /mnt
+umount -R /mnt
 ```
 
 reboot the system
