@@ -282,19 +282,39 @@ pacman -S wpa_supplicant
 ```
 
 Connect to the network with [wpa_passphrase](https://wiki.archlinux.org/title/Wpa_supplicant#Connecting_with_wpa_passphrase)
+_*Note, the interface name may differ when in the chroot from the booted kernel_
 ```shell
 wpa_passphrase <ssid> <password> > /etc/wpa_supplicant/wpa_supplicant-<interface>.conf
 ```
 
-Now, [enable & start](https://wiki.archlinux.org/title/Start/enable) the wpa_supplicant daemon reading the config file just created
+Instead of enabling _wpa_supplicant_ in systemd, we will use dhcpcd to start wpa_supplicant and get the DHCP address
+Add the following line to the beginning of the /etc/wpa_supplicant-<interface>.conf file
 ```shell
-systemctl enable --now wpa_supplicant@<interface>
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=wheel
 ```
+
+Now, install dhcpcd and enable the service for the wireless adapter
+```shell
+pacman -S dhcpcd
+```
+
+Configure dhcpcd to start wpa_supplicant using [dhcpcd hook](https://wiki.archlinux.org/title/Dhcpcd#10-wpa_supplicant)
+```shell
+ln -s /usr/share/dhcpcd/hooks/10-wpa_supplicant /usr/lib/dhcpcd/dhcpcd-hooks/
+```
+
+Enable the dhcpcd service
+```shell
+systemctl enable --now dhcpcd@<interface>.service
+```
+
+Additionally, review the [Speed up DHCP by disabling ARP probing](https://wiki.archlinux.org/title/Dhcpcd#Speed_up_DHCP_by_disabling_ARP_probing) page for a way to speed up boot times.
 
 Setup systemd-networkd for wireless networking
 ```shell
 vim /etc/systemd/network/25-wireless.network
 ```
+
 Add this to the contents of the file  
 ```
 [Match]
@@ -324,7 +344,7 @@ systemctl enable NetworkManager
 ```
 
 ## _Initramfs_
-_*creating an initramfs image isn't necessary since [mkinitcpio](https://wiki.archlinux.org/title/Mkinitcpio) was ran when pacstrap installed the kernel_
+_*creating an initramfs image isn't necessary since [mkinitcpio](https://wiki.archlinux.org/title/Mkinitcpio) was ran when pacstrap installed the kernel unless you installed a custom kernel outside of pacman_
 
 For [lvm](https://wiki.archlinux.org/title/Install_Arch_Linux_on_LVM#Adding_mkinitcpio_hooks), [system encryption](https://wiki.archlinux.org/title/Dm-crypt) or [raid](https://wiki.archlinux.org/title/RAID#Configure_mkinitcpio) modify [mkinitcpio.conf](https://man.archlinux.org/man/mkinitcpio.conf.5) then recreate the initramfs image with:
 ```shell
