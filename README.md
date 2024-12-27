@@ -483,7 +483,8 @@ reboot
 
 ## Appendix A - Resources  
 [ArchWiki](https://wiki.archlinux.org/title/Installation_guide)  
-[Surface Setup](https://github.com/linux-surface/linux-surface/wiki/Installation-and-Setup)
+[Surface Setup](https://github.com/linux-surface/linux-surface/wiki/Installation-and-Setup)  
+https://gist.github.com/fjpalacios/441f2f6d27f25ee238b9bfcb068865db
 
 ## Appendix B - Downloads  
 [Arch Releases](https://archlinux.org/releng/releases/)
